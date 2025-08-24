@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Stock y Precios Avanzado</title>
+    <!-- Tailwind CSS para un diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter para una tipografía limpia -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Iconos (Heroicons) -->
+    <script src="https://unpkg.com/heroicons@2.1.1/24/outline/index.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        ::placeholder { color: #9ca3af; }
+        .summary-card { transition: all 0.3s ease-in-out; }
+        .summary-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Gestor de Inventario y Precios</h1>
+            <p class="text-md text-gray-600 mt-2">Calcula tus precios de venta, inversión y ganancias de forma inteligente.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Columna Izquierda: Controles y Formulario -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg self-start">
+                <div class="mb-6">
+                    <label for="exchangeRate" class="block text-sm font-medium text-gray-700 mb-2">Valor del Dólar (ARS)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                        <input type="number" id="exchangeRate" value="1000" class="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                </div>
+                
+                <hr class="my-6">
+
+                <h2 id="formTitle" class="text-xl font-semibold mb-4 text-gray-800">Agregar Nuevo Producto</h2>
+                <form id="productForm" class="space-y-4">
+                    <input type="hidden" id="editingProductId">
+                    <div>
+                        <label for="productName" class="block text-sm font-medium text-gray-700">Nombre del Producto</label>
+                        <input type="text" id="productName" placeholder="Ej: Teclado Mecánico" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label for="stock" class="block text-sm font-medium text-gray-700">Stock Disponible</label>
+                        <input type="number" id="stock" placeholder="Ej: 50" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label for="costUSD" class="block text-sm font-medium text-gray-700">Precio de Costo (USD)</label>
+                         <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">U$D</span>
+                            <input type="number" step="0.01" id="costUSD" placeholder="Ej: 25.50" required class="mt-1 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="profitMargin" class="block text-sm font-medium text-gray-700">Margen de Ganancia (%)</label>
+                        <select id="profitMargin" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></select>
+                    </div>
+                    <div id="manualPriceContainer" class="hidden">
+                        <label for="manualSalePrice" class="block text-sm font-medium text-gray-700">Precio de Venta Manual (ARS)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                            <input type="number" step="0.01" id="manualSalePrice" placeholder="Ej: 85000" class="mt-1 block w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        </div>
+                    </div>
+                    <div id="formButtons" class="space-y-2">
+                         <button type="submit" id="submitButton" class="w-full bg-indigo-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition transform hover:scale-105">
+                            Agregar Producto
+                        </button>
+                        <button type="button" id="cancelEditButton" class="w-full bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition hidden">
+                            Cancelar Edición
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Columna Derecha: Resumen y Lista de productos -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Sección de Resumen Financiero -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="summary-card bg-white p-6 rounded-2xl shadow-lg flex items-center space-x-4">
+                        <div class="bg-blue-100 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-blue-600"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg></div>
+                        <div>
+                            <p class="text-sm text-gray-500">Inversión Total</p>
+                            <p id="totalInvestment" class="text-2xl font-bold text-gray-900">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="summary-card bg-white p-6 rounded-2xl shadow-lg flex items-center space-x-4">
+                        <div class="bg-green-100 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-green-600"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.826-2.25-2.226-2.25-3.712 0-1.754 1.135-3.274 3-3.962" /></svg></div>
+                        <div>
+                            <p class="text-sm text-gray-500">Ganancia Neta Potencial</p>
+                            <p id="totalProfit" class="text-2xl font-bold text-gray-900">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Productos -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Lista de Productos</h2>
+                    <div id="productListContainer" class="overflow-x-auto">
+                        <p id="emptyMessage" class="text-center text-gray-500 py-8">Aún no has agregado ningún producto. ¡Empieza ahora!</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- ELEMENTOS DEL DOM ---
+        const exchangeRateInput = document.getElementById('exchangeRate');
+        const productForm = document.getElementById('productForm');
+        const productNameInput = document.getElementById('productName');
+        const stockInput = document.getElementById('stock');
+        const costUSDInput = document.getElementById('costUSD');
+        const profitMarginSelect = document.getElementById('profitMargin');
+        const manualPriceContainer = document.getElementById('manualPriceContainer');
+        const manualSalePriceInput = document.getElementById('manualSalePrice');
+        const productListContainer = document.getElementById('productListContainer');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const totalInvestmentEl = document.getElementById('totalInvestment');
+        const totalProfitEl = document.getElementById('totalProfit');
+        const editingProductIdInput = document.getElementById('editingProductId');
+        const formTitle = document.getElementById('formTitle');
+        const submitButton = document.getElementById('submitButton');
+        const cancelEditButton = document.getElementById('cancelEditButton');
+
+        // --- ESTADO DE LA APLICACIÓN ---
+        let products = [];
+
+        // --- FUNCIONES AUXILIARES ---
+        const formatCurrency = (number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(number);
+
+        // --- FUNCIONES PRINCIPALES ---
+
+        /**
+         * Carga los productos desde localStorage al iniciar la aplicación.
+         */
+        const loadProductsFromStorage = () => {
+            const storedProducts = localStorage.getItem('stockAppProducts');
+            if (storedProducts) {
+                products = JSON.parse(storedProducts);
+            }
+        };
+
+        /**
+         * Guarda los productos en localStorage.
+         */
+        const saveProductsToStorage = () => {
+            localStorage.setItem('stockAppProducts', JSON.stringify(products));
+        };
+
+        const populateProfitMargins = () => {
+            profitMarginSelect.innerHTML = ''; // Limpiar opciones existentes
+            const margins = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+            margins.forEach(margin => {
+                const option = document.createElement('option');
+                option.value = margin;
+                option.textContent = `${margin}%`;
+                profitMarginSelect.appendChild(option);
+            });
+            const manualOption = document.createElement('option');
+            manualOption.value = 'manual';
+            manualOption.textContent = 'Manual';
+            profitMarginSelect.appendChild(manualOption);
+        };
+
+        const updateSummary = () => {
+            const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
+            let totalInvestment = 0;
+            let totalProfit = 0;
+
+            products.forEach(p => {
+                const costARS = p.costUSD * exchangeRate;
+                totalInvestment += costARS * p.stock;
+                
+                let salePrice = 0;
+                if (p.profitMargin === 'manual') {
+                    salePrice = p.manualSalePrice;
+                } else {
+                    salePrice = costARS * (1 + p.profitMargin / 100);
+                }
+                totalProfit += (salePrice - costARS) * p.stock;
+            });
+
+            totalInvestmentEl.textContent = formatCurrency(totalInvestment);
+            totalProfitEl.textContent = formatCurrency(totalProfit);
+        };
+
+        const renderProducts = () => {
+            if (products.length === 0) {
+                emptyMessage.style.display = 'block';
+                const existingTable = productListContainer.querySelector('table');
+                if (existingTable) existingTable.remove();
+            } else {
+                emptyMessage.style.display = 'none';
+                const existingTable = productListContainer.querySelector('table');
+                if (existingTable) existingTable.remove();
+
+                const table = document.createElement('table');
+                table.className = 'min-w-full divide-y divide-gray-200';
+                table.innerHTML = `
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo (ARS)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Aplicado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganancia/u</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+                const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
+
+                products.forEach(product => {
+                    const costARS = product.costUSD * exchangeRate;
+                    const salePrice = product.profitMargin === 'manual' ? product.manualSalePrice : costARS * (1 + product.profitMargin / 100);
+                    const profitPerUnit = salePrice - costARS;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${product.name}</div></td>
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${product.stock} u.</div></td>
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${formatCurrency(costARS)}</div></td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.profitMargin === 'manual' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                ${product.profitMargin === 'manual' ? 'Manual' : `${product.profitMargin}%`}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600">${formatCurrency(salePrice)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">${formatCurrency(profitPerUnit)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <button data-id="${product.id}" class="edit-btn text-indigo-600 hover:text-indigo-900 transition">Editar</button>
+                            <button data-id="${product.id}" class="delete-btn text-red-600 hover:text-red-900 transition">Eliminar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                productListContainer.appendChild(table);
+            }
+            updateSummary();
+            saveProductsToStorage();
+        };
+
+        const resetForm = () => {
+            productForm.reset();
+            editingProductIdInput.value = '';
+            formTitle.textContent = 'Agregar Nuevo Producto';
+            submitButton.textContent = 'Agregar Producto';
+            submitButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            submitButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            cancelEditButton.classList.add('hidden');
+            manualPriceContainer.classList.add('hidden');
+            productNameInput.focus();
+        };
+
+        const handleFormSubmit = (event) => {
+            event.preventDefault();
+            const editingId = editingProductIdInput.value;
+
+            const productData = {
+                name: productNameInput.value,
+                stock: parseInt(stockInput.value),
+                costUSD: parseFloat(costUSDInput.value),
+                profitMargin: profitMarginSelect.value,
+                manualSalePrice: profitMarginSelect.value === 'manual' ? parseFloat(manualSalePriceInput.value) : null
+            };
+
+            if (editingId) {
+                // Actualizar producto existente
+                const productIndex = products.findIndex(p => p.id == editingId);
+                if (productIndex > -1) {
+                    products[productIndex] = { ...products[productIndex], ...productData };
+                }
+            } else {
+                // Agregar nuevo producto
+                productData.id = Date.now();
+                products.push(productData);
+            }
+            
+            resetForm();
+            renderProducts();
+        };
+
+        const handleListClick = (event) => {
+            const target = event.target;
+            const productId = target.dataset.id;
+
+            if (target.classList.contains('delete-btn')) {
+                // Eliminar producto
+                products = products.filter(p => p.id != productId);
+                renderProducts();
+            }
+
+            if (target.classList.contains('edit-btn')) {
+                // Editar producto
+                const productToEdit = products.find(p => p.id == productId);
+                if (productToEdit) {
+                    productNameInput.value = productToEdit.name;
+                    stockInput.value = productToEdit.stock;
+                    costUSDInput.value = productToEdit.costUSD;
+                    profitMarginSelect.value = productToEdit.profitMargin;
+                    if (productToEdit.profitMargin === 'manual') {
+                        manualPriceContainer.classList.remove('hidden');
+                        manualSalePriceInput.value = productToEdit.manualSalePrice;
+                    } else {
+                        manualPriceContainer.classList.add('hidden');
+                    }
+                    editingProductIdInput.value = productToEdit.id;
+                    formTitle.textContent = 'Editando Producto';
+                    submitButton.textContent = 'Actualizar Producto';
+                    submitButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    submitButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                    cancelEditButton.classList.remove('hidden');
+                    window.scrollTo(0, 0); // Scroll al inicio de la página para ver el formulario
+                }
+            }
+        };
+
+        // --- INICIALIZACIÓN Y EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateProfitMargins();
+            loadProductsFromStorage();
+            renderProducts();
+        });
+
+        productForm.addEventListener('submit', handleFormSubmit);
+        exchangeRateInput.addEventListener('input', renderProducts);
+        productListContainer.addEventListener('click', handleListClick);
+        cancelEditButton.addEventListener('click', resetForm);
+
+        profitMarginSelect.addEventListener('change', () => {
+            if (profitMarginSelect.value === 'manual') {
+                manualPriceContainer.classList.remove('hidden');
+                manualSalePriceInput.setAttribute('required', 'true');
+            } else {
+                manualPriceContainer.classList.add('hidden');
+                manualSalePriceInput.removeAttribute('required');
+            }
+        });
+    </script>
+</body>
+</html>
