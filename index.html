@@ -3,118 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Stock y Precios Avanzado</title>
-    <!-- Tailwind CSS para un diseño moderno y responsivo -->
+    <title>Control de Stock y Precios con Supabase</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter para una tipografía limpia -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Iconos (Heroicons) -->
-    <script src="https://unpkg.com/heroicons@2.1.1/24/outline/index.js"></script>
+    <!-- Librería de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         ::placeholder { color: #9ca3af; }
         .summary-card { transition: all 0.3s ease-in-out; }
         .summary-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        #notification {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            padding: 12px 24px; border-radius: 8px; color: white;
+            opacity: 0; visibility: hidden; transition: opacity 0.5s, visibility 0.5s; z-index: 1000;
+        }
+        #notification.show { opacity: 1; visibility: visible; }
+        /* Estilo para el loader */
+        .loader { border-top-color: #4f46e5; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @-webkit-keyframes spinner { 0% { -webkit-transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); } }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-        
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Gestor de Inventario y Precios</h1>
-            <p class="text-md text-gray-600 mt-2">Calcula tus precios de venta, inversión y ganancias de forma inteligente.</p>
-        </header>
-
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- Columna Izquierda: Controles y Formulario -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg self-start">
-                <div class="mb-6">
-                    <label for="exchangeRate" class="block text-sm font-medium text-gray-700 mb-2">Valor del Dólar (ARS)</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-                        <input type="number" id="exchangeRate" value="1000" class="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                    </div>
-                </div>
-                
-                <hr class="my-6">
-
-                <h2 id="formTitle" class="text-xl font-semibold mb-4 text-gray-800">Agregar Nuevo Producto</h2>
-                <form id="productForm" class="space-y-4">
-                    <input type="hidden" id="editingProductId">
-                    <div>
-                        <label for="productName" class="block text-sm font-medium text-gray-700">Nombre del Producto</label>
-                        <input type="text" id="productName" placeholder="Ej: Teclado Mecánico" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                    </div>
-                    <div>
-                        <label for="stock" class="block text-sm font-medium text-gray-700">Stock Disponible</label>
-                        <input type="number" id="stock" placeholder="Ej: 50" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                    </div>
-                    <div>
-                        <label for="costUSD" class="block text-sm font-medium text-gray-700">Precio de Costo (USD)</label>
-                         <div class="relative">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">U$D</span>
-                            <input type="number" step="0.01" id="costUSD" placeholder="Ej: 25.50" required class="mt-1 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label for="profitMargin" class="block text-sm font-medium text-gray-700">Margen de Ganancia (%)</label>
-                        <select id="profitMargin" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></select>
-                    </div>
-                    <div id="manualPriceContainer" class="hidden">
-                        <label for="manualSalePrice" class="block text-sm font-medium text-gray-700">Precio de Venta Manual (ARS)</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-                            <input type="number" step="0.01" id="manualSalePrice" placeholder="Ej: 85000" class="mt-1 block w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        </div>
-                    </div>
-                    <div id="formButtons" class="space-y-2">
-                         <button type="submit" id="submitButton" class="w-full bg-indigo-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition transform hover:scale-105">
-                            Agregar Producto
-                        </button>
-                        <button type="button" id="cancelEditButton" class="w-full bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition hidden">
-                            Cancelar Edición
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Columna Derecha: Resumen y Lista de productos -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- Sección de Resumen Financiero -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="summary-card bg-white p-6 rounded-2xl shadow-lg flex items-center space-x-4">
-                        <div class="bg-blue-100 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-blue-600"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg></div>
-                        <div>
-                            <p class="text-sm text-gray-500">Inversión Total</p>
-                            <p id="totalInvestment" class="text-2xl font-bold text-gray-900">$0.00</p>
-                        </div>
-                    </div>
-                    <div class="summary-card bg-white p-6 rounded-2xl shadow-lg flex items-center space-x-4">
-                        <div class="bg-green-100 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-green-600"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.826-2.25-2.226-2.25-3.712 0-1.754 1.135-3.274 3-3.962" /></svg></div>
-                        <div>
-                            <p class="text-sm text-gray-500">Ganancia Neta Potencial</p>
-                            <p id="totalProfit" class="text-2xl font-bold text-gray-900">$0.00</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Lista de Productos -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Lista de Productos</h2>
-                    <div id="productListContainer" class="overflow-x-auto">
-                        <p id="emptyMessage" class="text-center text-gray-500 py-8">Aún no has agregado ningún producto. ¡Empieza ahora!</p>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <!-- Pantalla de Carga Global -->
+    <div id="global-loader" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
     </div>
 
+    <!-- Pantalla de Inicio de Sesión -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gray-100 hidden">
+        <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold text-center text-gray-900 mb-6">Iniciar Sesión</h2>
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                    <input type="password" id="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <p id="login-error" class="text-red-500 text-sm text-center hidden">Email o contraseña incorrectos.</p>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">Acceder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contenido Principal de la Aplicación -->
+    <div id="app-content" class="hidden">
+        <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+            <header class="text-center mb-8 flex justify-between items-center">
+                <div></div>
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Gestor de Inventario</h1>
+                    <p class="text-md text-gray-600 mt-2">Conectado a tu Base de Datos en la Nube.</p>
+                </div>
+                <button id="logout-button" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-red-600">Salir</button>
+            </header>
+
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-8 self-start">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <div class="mb-6">
+                            <label for="exchangeRate" class="block text-sm font-medium text-gray-700 mb-2">Valor del Dólar (ARS)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                                <input type="number" id="exchangeRate" value="1000" class="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        <hr class="my-6">
+                        <h2 id="formTitle" class="text-xl font-semibold mb-4 text-gray-800">Agregar/Editar Producto</h2>
+                        <form id="productForm" class="space-y-4">
+                            <input type="hidden" id="editingProductId">
+                            <input type="text" id="productName" placeholder="Nombre del Producto" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <input type="number" id="stock" placeholder="Stock Disponible" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <input type="number" step="0.01" id="costUSD" placeholder="Costo (USD)" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <select id="profitMargin" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-lg"></select>
+                            <div id="manualPriceContainer" class="hidden">
+                                <input type="number" step="0.01" id="manualSalePrice" placeholder="Precio Venta Manual (ARS)" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="space-y-2 pt-2">
+                                 <button type="submit" id="submitButton" class="w-full bg-indigo-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-indigo-700">Agregar Producto</button>
+                                 <button type="button" id="cancelEditButton" class="w-full bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-gray-300 hidden">Cancelar Edición</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-800">Registrar Venta</h2>
+                        <form id="saleForm" class="space-y-4">
+                            <select id="saleProduct" required class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-lg"></select>
+                            <input type="number" id="saleQuantity" min="1" placeholder="Cantidad Vendida" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-green-700">Registrar Venta</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Inversión Total (Stock)</p><p id="totalInvestment" class="text-2xl font-bold">$0.00</p></div>
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ganancia Potencial (Stock)</p><p id="potentialProfit" class="text-2xl font-bold">$0.00</p></div>
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ingresos por Ventas</p><p id="totalRevenue" class="text-2xl font-bold text-green-600">$0.00</p></div>
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ganancia Realizada</p><p id="realizedProfit" class="text-2xl font-bold text-green-600">$0.00</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-semibold mb-4">Inventario</h2><div id="productListContainer" class="overflow-x-auto"></div></div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-semibold mb-4">Historial de Ventas</h2><div id="salesListContainer" class="overflow-x-auto"></div></div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="notification"></div>
+
     <script>
+        // --- CONFIGURACIÓN DE SUPABASE ---
+        const SUPABASE_URL = 'https://udbnbqmjkvgxojikfkcz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkYm5icW1qa3ZneG9qaWtma2N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc2ODMsImV4cCI6MjA3MTU3MzY4M30.8kShr-2FXTnXZZ9-1V-l_uvOiNAlkry9Ro0h3TP6gP8';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // --- ELEMENTOS DEL DOM ---
+        const globalLoader = document.getElementById('global-loader');
+        const loginScreen = document.getElementById('login-screen');
+        const appContent = document.getElementById('app-content');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('login-error');
+        const logoutButton = document.getElementById('logout-button');
         const exchangeRateInput = document.getElementById('exchangeRate');
         const productForm = document.getElementById('productForm');
         const productNameInput = document.getElementById('productName');
@@ -123,232 +139,303 @@
         const profitMarginSelect = document.getElementById('profitMargin');
         const manualPriceContainer = document.getElementById('manualPriceContainer');
         const manualSalePriceInput = document.getElementById('manualSalePrice');
-        const productListContainer = document.getElementById('productListContainer');
-        const emptyMessage = document.getElementById('emptyMessage');
-        const totalInvestmentEl = document.getElementById('totalInvestment');
-        const totalProfitEl = document.getElementById('totalProfit');
         const editingProductIdInput = document.getElementById('editingProductId');
         const formTitle = document.getElementById('formTitle');
         const submitButton = document.getElementById('submitButton');
         const cancelEditButton = document.getElementById('cancelEditButton');
+        const productListContainer = document.getElementById('productListContainer');
+        const saleForm = document.getElementById('saleForm');
+        const saleProductSelect = document.getElementById('saleProduct');
+        const saleQuantityInput = document.getElementById('saleQuantity');
+        const salesListContainer = document.getElementById('salesListContainer');
+        const totalInvestmentEl = document.getElementById('totalInvestment');
+        const potentialProfitEl = document.getElementById('potentialProfit');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const realizedProfitEl = document.getElementById('realizedProfit');
+        const notificationEl = document.getElementById('notification');
 
         // --- ESTADO DE LA APLICACIÓN ---
         let products = [];
+        let sales = [];
+        let currentUser = null;
 
         // --- FUNCIONES AUXILIARES ---
         const formatCurrency = (number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(number);
+        const showNotification = (message, isError = false) => {
+            notificationEl.textContent = message;
+            notificationEl.style.backgroundColor = isError ? '#ef4444' : '#22c55e';
+            notificationEl.classList.add('show');
+            setTimeout(() => { notificationEl.classList.remove('show'); }, 3000);
+        };
 
-        // --- FUNCIONES PRINCIPALES ---
+        // --- LÓGICA DE DATOS CON SUPABASE ---
+        async function loadData() {
+            if (!currentUser) return;
+            globalLoader.classList.remove('hidden');
+            try {
+                const { data: productsData, error: productsError } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
+                if (productsError) throw productsError;
+                products = productsData;
 
-        /**
-         * Carga los productos desde localStorage al iniciar la aplicación.
-         */
-        const loadProductsFromStorage = () => {
-            const storedProducts = localStorage.getItem('stockAppProducts');
-            if (storedProducts) {
-                products = JSON.parse(storedProducts);
+                const { data: salesData, error: salesError } = await _supabase.from('sales').select('*').order('created_at', { ascending: false });
+                if (salesError) throw salesError;
+                sales = salesData;
+                
+                renderAll();
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                showNotification('Error al cargar los datos desde la nube.', true);
+            } finally {
+                globalLoader.classList.add('hidden');
             }
+        }
+
+        // --- RENDERIZADO Y ACTUALIZACIÓN DE UI ---
+        const renderAll = () => {
+            renderProducts();
+            renderSales();
+            updateSummary();
+            populateProductsForSaleSelect();
         };
 
-        /**
-         * Guarda los productos en localStorage.
-         */
-        const saveProductsToStorage = () => {
-            localStorage.setItem('stockAppProducts', JSON.stringify(products));
-        };
-
-        const populateProfitMargins = () => {
-            profitMarginSelect.innerHTML = ''; // Limpiar opciones existentes
-            const margins = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
-            margins.forEach(margin => {
-                const option = document.createElement('option');
-                option.value = margin;
-                option.textContent = `${margin}%`;
-                profitMarginSelect.appendChild(option);
-            });
-            const manualOption = document.createElement('option');
-            manualOption.value = 'manual';
-            manualOption.textContent = 'Manual';
-            profitMarginSelect.appendChild(manualOption);
-        };
-
+        // ... (El resto de las funciones de renderizado y actualización de UI se mantienen igual que en la versión anterior)
         const updateSummary = () => {
             const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
-            let totalInvestment = 0;
-            let totalProfit = 0;
-
+            let totalInvestment = 0, potentialProfit = 0, totalRevenue = 0, realizedProfit = 0;
             products.forEach(p => {
-                const costARS = p.costUSD * exchangeRate;
+                const costARS = p.cost_usd * exchangeRate;
                 totalInvestment += costARS * p.stock;
-                
-                let salePrice = 0;
-                if (p.profitMargin === 'manual') {
-                    salePrice = p.manualSalePrice;
-                } else {
-                    salePrice = costARS * (1 + p.profitMargin / 100);
-                }
-                totalProfit += (salePrice - costARS) * p.stock;
+                const salePrice = p.profit_margin === 'manual' ? p.manual_sale_price : costARS * (1 + p.profit_margin / 100);
+                potentialProfit += (salePrice - costARS) * p.stock;
             });
-
+            sales.forEach(s => {
+                totalRevenue += s.total_sale;
+                realizedProfit += (s.total_sale - s.total_cost);
+            });
             totalInvestmentEl.textContent = formatCurrency(totalInvestment);
-            totalProfitEl.textContent = formatCurrency(totalProfit);
+            potentialProfitEl.textContent = formatCurrency(potentialProfit);
+            totalRevenueEl.textContent = formatCurrency(totalRevenue);
+            realizedProfitEl.textContent = formatCurrency(realizedProfit);
         };
 
         const renderProducts = () => {
+            productListContainer.innerHTML = '';
             if (products.length === 0) {
-                emptyMessage.style.display = 'block';
-                const existingTable = productListContainer.querySelector('table');
-                if (existingTable) existingTable.remove();
-            } else {
-                emptyMessage.style.display = 'none';
-                const existingTable = productListContainer.querySelector('table');
-                if (existingTable) existingTable.remove();
-
-                const table = document.createElement('table');
-                table.className = 'min-w-full divide-y divide-gray-200';
-                table.innerHTML = `
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo (ARS)</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Aplicado</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganancia/u</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
-                `;
-                const tbody = table.querySelector('tbody');
-                const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
-
-                products.forEach(product => {
-                    const costARS = product.costUSD * exchangeRate;
-                    const salePrice = product.profitMargin === 'manual' ? product.manualSalePrice : costARS * (1 + product.profitMargin / 100);
-                    const profitPerUnit = salePrice - costARS;
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${product.name}</div></td>
-                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${product.stock} u.</div></td>
-                        <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${formatCurrency(costARS)}</div></td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.profitMargin === 'manual' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                                ${product.profitMargin === 'manual' ? 'Manual' : `${product.profitMargin}%`}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600">${formatCurrency(salePrice)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">${formatCurrency(profitPerUnit)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <button data-id="${product.id}" class="edit-btn text-indigo-600 hover:text-indigo-900 transition">Editar</button>
-                            <button data-id="${product.id}" class="delete-btn text-red-600 hover:text-red-900 transition">Eliminar</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                productListContainer.appendChild(table);
+                productListContainer.innerHTML = `<p class="text-center text-gray-500 py-8">Tu inventario está vacío.</p>`;
+                return;
             }
-            updateSummary();
-            saveProductsToStorage();
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200';
+            table.innerHTML = `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo (ARS)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
+            const tbody = table.querySelector('tbody');
+            const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
+            products.forEach(p => {
+                const costARS = p.cost_usd * exchangeRate;
+                const salePrice = p.profit_margin === 'manual' ? p.manual_sale_price : costARS * (1 + p.profit_margin / 100);
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${p.name}</div></td><td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${p.stock} u.</div></td><td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${formatCurrency(costARS)}</div></td><td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600">${formatCurrency(salePrice)}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"><button data-id="${p.id}" class="edit-btn text-indigo-600 hover:text-indigo-900">Editar</button><button data-id="${p.id}" class="delete-btn text-red-600 hover:text-red-900">Eliminar</button></td>`;
+                tbody.appendChild(row);
+            });
+            productListContainer.appendChild(table);
         };
 
-        const resetForm = () => {
+        const renderSales = () => {
+            salesListContainer.innerHTML = '';
+            if (sales.length === 0) {
+                salesListContainer.innerHTML = `<p class="text-center text-gray-500 py-8">No has registrado ventas.</p>`;
+                return;
+            }
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200';
+            table.innerHTML = `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Venta</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
+            const tbody = table.querySelector('tbody');
+            sales.forEach(s => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(s.created_at).toLocaleDateString()}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${s.name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${s.quantity} u.</td><td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${formatCurrency(s.total_sale)}</td>`;
+                tbody.appendChild(row);
+            });
+            salesListContainer.appendChild(table);
+        };
+
+        const populateProductsForSaleSelect = () => {
+            saleProductSelect.innerHTML = '<option value="" disabled selected>Selecciona un producto</option>';
+            products.forEach(p => {
+                if (p.stock > 0) {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = `${p.name} (Stock: ${p.stock})`;
+                    saleProductSelect.appendChild(option);
+                }
+            });
+        };
+
+        const populateProfitMargins = () => {
+            profitMarginSelect.innerHTML = '';
+            const margins = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+            margins.forEach(m => profitMarginSelect.add(new Option(`${m}%`, m)));
+            profitMarginSelect.add(new Option('Manual', 'manual'));
+        };
+        
+        // --- MANEJADORES DE EVENTOS ---
+        const handleProductFormSubmit = async (event) => {
+            event.preventDefault();
+            const editingId = editingProductIdInput.value;
+            const productData = {
+                name: productNameInput.value,
+                stock: parseInt(stockInput.value),
+                cost_usd: parseFloat(costUSDInput.value),
+                profit_margin: profitMarginSelect.value,
+                manual_sale_price: profitMarginSelect.value === 'manual' ? parseFloat(manualSalePriceInput.value) : null,
+                user_id: currentUser.id // Asociar con el usuario actual
+            };
+
+            try {
+                let error;
+                if (editingId) {
+                    ({ error } = await _supabase.from('products').update(productData).eq('id', editingId));
+                } else {
+                    ({ error } = await _supabase.from('products').insert([productData]));
+                }
+                if (error) throw error;
+                resetProductForm();
+                loadData();
+            } catch (error) {
+                console.error('Error guardando producto:', error);
+                showNotification('Error al guardar el producto.', true);
+            }
+        };
+
+        const handleSaleFormSubmit = async (event) => {
+            event.preventDefault();
+            const productId = saleProductSelect.value;
+            const quantity = parseInt(saleQuantityInput.value);
+            const product = products.find(p => p.id == productId);
+
+            if (!product || quantity > product.stock) {
+                showNotification('Producto no válido o stock insuficiente.', true);
+                return;
+            }
+
+            const newStock = product.stock - quantity;
+            const { error: updateError } = await _supabase.from('products').update({ stock: newStock }).eq('id', productId);
+            if (updateError) {
+                showNotification('Error al actualizar el stock.', true);
+                return;
+            }
+
+            const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
+            const costARS = product.cost_usd * exchangeRate;
+            const salePrice = product.profit_margin === 'manual' ? product.manual_sale_price : costARS * (1 + product.profit_margin / 100);
+            
+            const newSale = {
+                product_id: product.id,
+                name: product.name,
+                quantity: quantity,
+                total_sale: salePrice * quantity,
+                total_cost: costARS * quantity,
+                user_id: currentUser.id
+            };
+            const { error: insertError } = await _supabase.from('sales').insert([newSale]);
+            if (insertError) {
+                // Revertir el stock si la venta falla
+                await _supabase.from('products').update({ stock: product.stock }).eq('id', productId);
+                showNotification('Error al registrar la venta.', true);
+                return;
+            }
+            
+            saleForm.reset();
+            loadData();
+            showNotification('¡Venta registrada con éxito!');
+        };
+
+        const handleProductListClick = async (event) => {
+            const target = event.target;
+            const productId = target.dataset.id;
+            if (target.classList.contains('delete-btn')) {
+                if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                    const { error } = await _supabase.from('products').delete().eq('id', productId);
+                    if (error) showNotification('Error al eliminar.', true);
+                    else loadData();
+                }
+            }
+            if (target.classList.contains('edit-btn')) {
+                const product = products.find(p => p.id == productId);
+                if (product) {
+                    productNameInput.value = product.name;
+                    stockInput.value = product.stock;
+                    costUSDInput.value = product.cost_usd;
+                    profitMarginSelect.value = product.profit_margin;
+                    manualPriceContainer.classList.toggle('hidden', product.profit_margin !== 'manual');
+                    if (product.profit_margin === 'manual') manualSalePriceInput.value = product.manual_sale_price;
+                    editingProductIdInput.value = product.id;
+                    formTitle.textContent = 'Editando Producto';
+                    submitButton.textContent = 'Actualizar Producto';
+                    submitButton.classList.replace('bg-indigo-600', 'bg-yellow-500');
+                    cancelEditButton.classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        };
+
+        const resetProductForm = () => {
             productForm.reset();
             editingProductIdInput.value = '';
             formTitle.textContent = 'Agregar Nuevo Producto';
             submitButton.textContent = 'Agregar Producto';
-            submitButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-            submitButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            submitButton.classList.replace('bg-yellow-500', 'bg-indigo-600');
             cancelEditButton.classList.add('hidden');
             manualPriceContainer.classList.add('hidden');
             productNameInput.focus();
         };
 
-        const handleFormSubmit = (event) => {
-            event.preventDefault();
-            const editingId = editingProductIdInput.value;
-
-            const productData = {
-                name: productNameInput.value,
-                stock: parseInt(stockInput.value),
-                costUSD: parseFloat(costUSDInput.value),
-                profitMargin: profitMarginSelect.value,
-                manualSalePrice: profitMarginSelect.value === 'manual' ? parseFloat(manualSalePriceInput.value) : null
-            };
-
-            if (editingId) {
-                // Actualizar producto existente
-                const productIndex = products.findIndex(p => p.id == editingId);
-                if (productIndex > -1) {
-                    products[productIndex] = { ...products[productIndex], ...productData };
-                }
+        // --- AUTENTICACIÓN CON SUPABASE ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                loginError.classList.remove('hidden');
             } else {
-                // Agregar nuevo producto
-                productData.id = Date.now();
-                products.push(productData);
+                loginError.classList.add('hidden');
+                // El listener onAuthStateChange se encargará de mostrar la app
             }
-            
-            resetForm();
-            renderProducts();
-        };
+        });
 
-        const handleListClick = (event) => {
-            const target = event.target;
-            const productId = target.dataset.id;
+        logoutButton.addEventListener('click', async () => {
+            await _supabase.auth.signOut();
+        });
 
-            if (target.classList.contains('delete-btn')) {
-                // Eliminar producto
-                products = products.filter(p => p.id != productId);
-                renderProducts();
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                currentUser = session.user;
+                loginScreen.classList.add('hidden');
+                appContent.classList.remove('hidden');
+                loadData();
+            } else {
+                currentUser = null;
+                loginScreen.classList.remove('hidden');
+                appContent.classList.add('hidden');
+                globalLoader.classList.add('hidden');
             }
+        });
 
-            if (target.classList.contains('edit-btn')) {
-                // Editar producto
-                const productToEdit = products.find(p => p.id == productId);
-                if (productToEdit) {
-                    productNameInput.value = productToEdit.name;
-                    stockInput.value = productToEdit.stock;
-                    costUSDInput.value = productToEdit.costUSD;
-                    profitMarginSelect.value = productToEdit.profitMargin;
-                    if (productToEdit.profitMargin === 'manual') {
-                        manualPriceContainer.classList.remove('hidden');
-                        manualSalePriceInput.value = productToEdit.manualSalePrice;
-                    } else {
-                        manualPriceContainer.classList.add('hidden');
-                    }
-                    editingProductIdInput.value = productToEdit.id;
-                    formTitle.textContent = 'Editando Producto';
-                    submitButton.textContent = 'Actualizar Producto';
-                    submitButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                    submitButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-                    cancelEditButton.classList.remove('hidden');
-                    window.scrollTo(0, 0); // Scroll al inicio de la página para ver el formulario
-                }
-            }
-        };
-
-        // --- INICIALIZACIÓN Y EVENT LISTENERS ---
+        // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
             populateProfitMargins();
-            loadProductsFromStorage();
-            renderProducts();
+            // onAuthStateChange se encarga de la lógica inicial
         });
 
-        productForm.addEventListener('submit', handleFormSubmit);
-        exchangeRateInput.addEventListener('input', renderProducts);
-        productListContainer.addEventListener('click', handleListClick);
-        cancelEditButton.addEventListener('click', resetForm);
-
+        productForm.addEventListener('submit', handleProductFormSubmit);
+        saleForm.addEventListener('submit', handleSaleFormSubmit);
+        exchangeRateInput.addEventListener('input', renderAll);
+        productListContainer.addEventListener('click', handleProductListClick);
+        cancelEditButton.addEventListener('click', resetProductForm);
         profitMarginSelect.addEventListener('change', () => {
-            if (profitMarginSelect.value === 'manual') {
-                manualPriceContainer.classList.remove('hidden');
-                manualSalePriceInput.setAttribute('required', 'true');
-            } else {
-                manualPriceContainer.classList.add('hidden');
-                manualSalePriceInput.removeAttribute('required');
-            }
+            manualPriceContainer.classList.toggle('hidden', profitMarginSelect.value !== 'manual');
+            manualSalePriceInput.required = profitMarginSelect.value === 'manual';
         });
+
     </script>
 </body>
 </html>
