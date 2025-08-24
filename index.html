@@ -66,7 +66,7 @@
             </header>
 
             <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg-col-span-1 space-y-8 self-start">
+                <div class="lg:col-span-1 space-y-8 self-start">
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <div class="mb-6">
                             <label for="exchangeRate" class="block text-sm font-medium text-gray-700 mb-2">Valor del Dólar (ARS)</label>
@@ -108,13 +108,19 @@
                         <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ingresos por Ventas</p><p id="totalRevenue" class="text-2xl font-bold text-green-600">$0.00</p></div>
                         <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ganancia Realizada</p><p id="realizedProfit" class="text-2xl font-bold text-green-600">$0.00</p></div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-semibold mb-4">Inventario</h2><div id="productListContainer" class="overflow-x-auto"></div></div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <div class="flex justify-between items-center mb-4">
+                             <h2 class="text-xl font-semibold">Inventario</h2>
+                             <input type="text" id="search-inventory" placeholder="Buscar producto..." class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div id="productListContainer" class="overflow-y-auto max-h-[600px]"></div>
+                    </div>
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-semibold">Historial de Ventas</h2>
                             <button id="clear-sales-btn" class="text-sm bg-red-100 text-red-700 font-semibold py-1 px-3 rounded-lg hover:bg-red-200 transition-colors">Limpiar Historial</button>
                         </div>
-                        <div id="salesListContainer" class="overflow-x-auto"></div>
+                        <div id="salesListContainer" class="overflow-y-auto max-h-[400px]"></div>
                     </div>
                 </div>
             </main>
@@ -149,6 +155,7 @@
         const formTitle = document.getElementById('formTitle');
         const submitButton = document.getElementById('submitButton');
         const cancelEditButton = document.getElementById('cancelEditButton');
+        const searchInventoryInput = document.getElementById('search-inventory');
         const productListContainer = document.getElementById('productListContainer');
         const saleForm = document.getElementById('saleForm');
         const saleProductSelect = document.getElementById('saleProduct');
@@ -226,16 +233,22 @@
 
         const renderProducts = () => {
             productListContainer.innerHTML = '';
-            if (products.length === 0) {
-                productListContainer.innerHTML = `<p class="text-center text-gray-500 py-8">Tu inventario está vacío.</p>`;
+            
+            const searchTerm = searchInventoryInput.value.toLowerCase();
+            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm));
+
+            if (filteredProducts.length === 0) {
+                productListContainer.innerHTML = `<p class="text-center text-gray-500 py-8">${products.length === 0 ? 'Tu inventario está vacío.' : 'No se encontraron productos.'}</p>`;
                 return;
             }
+
             const table = document.createElement('table');
             table.className = 'min-w-full divide-y divide-gray-200';
-            table.innerHTML = `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo (ARS)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
+            table.innerHTML = `<thead class="bg-gray-50 sticky top-0"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo (ARS)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
             const tbody = table.querySelector('tbody');
             const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
-            products.forEach(p => {
+            
+            filteredProducts.forEach(p => {
                 const costARS = p.cost_usd * exchangeRate;
                 const salePrice = p.profit_margin === 'manual' ? p.manual_sale_price : costARS * (1 + parseFloat(p.profit_margin) / 100);
                 const row = document.createElement('tr');
@@ -253,7 +266,7 @@
             }
             const table = document.createElement('table');
             table.className = 'min-w-full divide-y divide-gray-200';
-            table.innerHTML = `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Venta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
+            table.innerHTML = `<thead class="bg-gray-50 sticky top-0"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Venta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
             const tbody = table.querySelector('tbody');
             sales.forEach(s => {
                 const row = document.createElement('tr');
@@ -280,6 +293,10 @@
             const margins = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
             margins.forEach(m => profitMarginSelect.add(new Option(`${m}%`, m)));
             profitMarginSelect.add(new Option('Manual', 'manual'));
+            // BUG FIX: Ensure a default value is set
+            if (margins.length > 0) {
+                profitMarginSelect.value = margins[0];
+            }
         };
         
         // --- MANEJADORES DE EVENTOS ---
@@ -404,6 +421,7 @@
             cancelEditButton.classList.add('hidden');
             manualPriceContainer.classList.add('hidden');
             productNameInput.focus();
+            populateProfitMargins(); // Re-populate to reset default value
         };
 
         // --- AUTENTICACIÓN CON SUPABASE ---
@@ -445,6 +463,7 @@
         productForm.addEventListener('submit', handleProductFormSubmit);
         saleForm.addEventListener('submit', handleSaleFormSubmit);
         exchangeRateInput.addEventListener('input', renderAll);
+        searchInventoryInput.addEventListener('input', renderProducts);
         productListContainer.addEventListener('click', handleProductListClick);
         salesListContainer.addEventListener('click', handleSalesListClick);
         cancelEditButton.addEventListener('click', resetProductForm);
