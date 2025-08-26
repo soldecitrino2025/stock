@@ -25,11 +25,6 @@
         .loader { border-top-color: #4f46e5; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @-webkit-keyframes spinner { 0% { -webkit-transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); } }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Estilos para datos sensibles */
-        .sensitive-data.hidden-data {
-            font-family: monospace;
-            letter-spacing: 2px;
-        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -107,24 +102,11 @@
                     </div>
                 </div>
                 <div class="lg:col-span-2 space-y-8">
-                    <div>
-                        <div class="flex justify-end mb-2">
-                             <button id="toggle-visibility-btn" class="p-2 rounded-full hover:bg-gray-200 text-gray-500">
-                                <svg id="eye-icon-visible" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <svg id="eye-icon-hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Inversión Total (Stock)</p><p id="totalInvestment" class="text-2xl font-bold sensitive-data">$0.00</p></div>
-                            <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ganancia Potencial (Stock)</p><p id="potentialProfit" class="text-2xl font-bold sensitive-data">$0.00</p></div>
-                            <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ingresos por Ventas</p><p id="totalRevenue" class="text-2xl font-bold text-green-600">$0.00</p></div>
-                            <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ganancia Realizada</p><p id="realizedProfit" class="text-2xl font-bold text-green-600 sensitive-data">$0.00</p></div>
-                        </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Inversión Total (Stock)</p><p id="totalInvestment" class="text-2xl font-bold">$0.00</p></div>
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ganancia Potencial (Stock)</p><p id="potentialProfit" class="text-2xl font-bold">$0.00</p></div>
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ingresos por Ventas</p><p id="totalRevenue" class="text-2xl font-bold text-green-600">$0.00</p></div>
+                        <div class="summary-card bg-white p-6 rounded-2xl shadow-lg"><p class="text-sm text-gray-500">Ganancia Realizada</p><p id="realizedProfit" class="text-2xl font-bold text-green-600">$0.00</p></div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <div class="flex justify-between items-center mb-4">
@@ -150,7 +132,7 @@
     <script>
         // --- CONFIGURACIÓN DE SUPABASE ---
         const SUPABASE_URL = 'https://udbnbqmjkvgxojikfkcz.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkYm5icW1qa3ZneG9qaWtma2N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc2ODMsImV4cCI6MjA3MTU3MzY4M30.8kShr-2FXTnXZZ9-1V-l_uvOiNAlkry9Ro0h3TP6gP8';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkYm5icW1qa3ZneG9qaWtma2N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc2ODMsImV4cCI6MjA3MTU3MzY4M30.8kShr-2FXTnXZZ-1V-l_uvOiNAlkry9Ro0h3TP6gP8';
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -185,15 +167,11 @@
         const totalRevenueEl = document.getElementById('totalRevenue');
         const realizedProfitEl = document.getElementById('realizedProfit');
         const notificationEl = document.getElementById('notification');
-        const toggleVisibilityBtn = document.getElementById('toggle-visibility-btn');
-        const eyeIconVisible = document.getElementById('eye-icon-visible');
-        const eyeIconHidden = document.getElementById('eye-icon-hidden');
 
         // --- ESTADO DE LA APLICACIÓN ---
         let products = [];
         let sales = [];
         let currentUser = null;
-        let isSensitiveDataVisible = true;
 
         // --- FUNCIONES AUXILIARES ---
         const formatCurrency = (number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(number);
@@ -228,7 +206,6 @@
 
         // --- RENDERIZADO Y ACTUALIZACIÓN DE UI ---
         const renderAll = () => {
-            updateVisibility();
             renderProducts();
             renderSales();
             updateSummary();
@@ -248,14 +225,10 @@
                 totalRevenue += s.total_sale;
                 realizedProfit += (s.total_sale - s.total_cost);
             });
-
             totalInvestmentEl.textContent = formatCurrency(totalInvestment);
             potentialProfitEl.textContent = formatCurrency(potentialProfit);
             totalRevenueEl.textContent = formatCurrency(totalRevenue);
             realizedProfitEl.textContent = formatCurrency(realizedProfit);
-            
-            // Aplicar visibilidad después de actualizar
-            updateVisibility();
         };
 
         const renderProducts = () => {
@@ -271,17 +244,15 @@
 
             const table = document.createElement('table');
             table.className = 'min-w-full divide-y divide-gray-200';
-            const costHeader = isSensitiveDataVisible ? '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo (ARS)</th>' : '';
-            table.innerHTML = `<thead class="bg-gray-50 sticky top-0"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>${costHeader}<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
+            table.innerHTML = `<thead class="bg-gray-50 sticky top-0"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo (ARS)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"></tbody>`;
             const tbody = table.querySelector('tbody');
             const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
             
             filteredProducts.forEach(p => {
                 const costARS = p.cost_usd * exchangeRate;
                 const salePrice = p.profit_margin === 'manual' ? p.manual_sale_price : costARS * (1 + parseFloat(p.profit_margin) / 100);
-                const costCell = isSensitiveDataVisible ? `<td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900 sensitive-data">${formatCurrency(costARS)}</div></td>` : '';
                 const row = document.createElement('tr');
-                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${p.name}</div></td><td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${p.stock} u.</div></td>${costCell}<td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600">${formatCurrency(salePrice)}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"><button data-id="${p.id}" class="edit-btn text-indigo-600 hover:text-indigo-900">Editar</button><button data-id="${p.id}" class="delete-btn text-red-600 hover:text-red-900">Eliminar</button></td>`;
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${p.name}</div></td><td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${p.stock} u.</div></td><td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">${formatCurrency(costARS)}</div></td><td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600">${formatCurrency(salePrice)}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"><button data-id="${p.id}" class="edit-btn text-indigo-600 hover:text-indigo-900">Editar</button><button data-id="${p.id}" class="delete-btn text-red-600 hover:text-red-900">Eliminar</button></td>`;
                 tbody.appendChild(row);
             });
             productListContainer.appendChild(table);
@@ -325,46 +296,6 @@
             if (margins.length > 0) {
                 profitMarginSelect.value = margins[0];
             }
-        };
-
-        const updateVisibility = () => {
-            const sensitiveElements = document.querySelectorAll('.sensitive-data');
-            if (isSensitiveDataVisible) {
-                eyeIconVisible.classList.remove('hidden');
-                eyeIconHidden.classList.add('hidden');
-                sensitiveElements.forEach(el => {
-                    el.classList.remove('hidden-data');
-                    // Re-render summary to show actual values
-                    updateSummaryValues(); 
-                });
-            } else {
-                eyeIconVisible.classList.add('hidden');
-                eyeIconHidden.classList.remove('hidden');
-                sensitiveElements.forEach(el => {
-                    el.classList.add('hidden-data');
-                    el.textContent = '********';
-                });
-            }
-            // Re-render products to show/hide column
-            renderProducts();
-        };
-
-        const updateSummaryValues = () => {
-            // This is a helper to restore values without recalculating everything
-            const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
-            let totalInvestment = 0, potentialProfit = 0, realizedProfit = 0;
-            products.forEach(p => {
-                const costARS = p.cost_usd * exchangeRate;
-                totalInvestment += costARS * p.stock;
-                const salePrice = p.profit_margin === 'manual' ? p.manual_sale_price : costARS * (1 + parseFloat(p.profit_margin) / 100);
-                potentialProfit += (salePrice - costARS) * p.stock;
-            });
-            sales.forEach(s => {
-                realizedProfit += (s.total_sale - s.total_cost);
-            });
-            totalInvestmentEl.textContent = formatCurrency(totalInvestment);
-            potentialProfitEl.textContent = formatCurrency(potentialProfit);
-            realizedProfitEl.textContent = formatCurrency(realizedProfit);
         };
         
         // --- MANEJADORES DE EVENTOS ---
@@ -526,11 +457,6 @@
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
             populateProfitMargins();
-            const savedVisibility = localStorage.getItem('sensitiveDataVisible');
-            if (savedVisibility !== null) {
-                isSensitiveDataVisible = JSON.parse(savedVisibility);
-            }
-            updateVisibility();
         });
 
         productForm.addEventListener('submit', handleProductFormSubmit);
@@ -560,13 +486,6 @@
             manualSalePriceInput.required = profitMarginSelect.value === 'manual';
         });
 
-        toggleVisibilityBtn.addEventListener('click', () => {
-            isSensitiveDataVisible = !isSensitiveDataVisible;
-            localStorage.setItem('sensitiveDataVisible', JSON.stringify(isSensitiveDataVisible));
-            updateVisibility();
-        });
-
     </script>
 </body>
 </html>
-
